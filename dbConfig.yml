@@ -1,0 +1,4 @@
+development:
+  dialect: mysql
+  datasource: root:ameykode@tcp(127.0.0.1:3306)/recrutr-db?parseTime=true&multiStatements=true
+  dir: migrations

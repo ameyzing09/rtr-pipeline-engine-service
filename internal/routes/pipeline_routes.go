@@ -11,5 +11,6 @@ func RegisterPipelineRoutes(r *gin.RouterGroup, h *handler.PipelineHandler) {
 	// e.g. pipeline.Use(middleware.AuthMiddleware())
 	pipeline.POST("/", h.CreatePipeline)
 	pipeline.GET("/", h.ListPipelines)
+	pipeline.POST("/assign", h.AssignPipeline)
 	// future pipeline routes can be added here
 }

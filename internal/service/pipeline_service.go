@@ -8,6 +8,7 @@ import (
 type PipelineService interface {
 	CreatePipeline(p *model.Pipeline) error
 	ListPipelines(tenantId string) ([]model.Pipeline, error)
+	AssignPipeline(pipelineId string, jobId string, tenantId string) error
 }
 
 type pipelineService struct {
@@ -30,4 +31,14 @@ func (s *pipelineService) ListPipelines(tenantId string) ([]model.Pipeline, erro
 	}).Find(&pipelines).Error
 
 	return pipelines, err
+}
+
+func (s *pipelineService) AssignPipeline(pipelineId string, jobId string, tenantId string) error {
+	assignment := model.PipelineAssignment{
+		PipelineID: pipelineId,
+		JobID:      jobId,
+		TenantID:   tenantId,
+	}
+
+	return s.db.Create(&assignment).Error
 }

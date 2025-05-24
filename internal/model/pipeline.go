@@ -16,3 +16,12 @@ type Pipeline struct {
 	IsDeleted   bool           `gorm:"default:false"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime"`
 }
+
+type PipelineAssignment struct {
+	ID         string    `gorm:"primaryKey;type:char(36);"`
+	TenantID   string    `gorm:"type:char(36);not null;index"`
+	PipelineID string    `gorm:"type:char(36);not null;index"`
+	JobID      string    `gorm:"type:char(36);not null;index"`
+	IsDeleted  bool      `gorm:"default:false"`
+	CreatedAt  time.Time `gorm:"autoCreateTime"`
+}

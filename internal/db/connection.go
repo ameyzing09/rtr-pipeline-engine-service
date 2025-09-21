@@ -23,9 +23,9 @@ func InitDB() *gorm.DB {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	// if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
-	// 	log.Fatalf("Database environment variables are not set properly. DB_USER: %q, DB_PASSWORD: %q, DB_HOST: %q, DB_PORT: %q, DB_NAME: %q", dbUser, dbPassword, dbHost, dbPort, dbName)
-	// }
+	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
+		log.Fatalf("Database environment variables are not set properly. DB_USER: %q, DB_PASSWORD: %q, DB_HOST: %q, DB_PORT: %q, DB_NAME: %q", dbUser, dbPassword, dbHost, dbPort, dbName)
+	}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&multiStatements=true", dbUser, dbPassword, dbHost, dbPort, dbName)
 	// print the DSN for debugging

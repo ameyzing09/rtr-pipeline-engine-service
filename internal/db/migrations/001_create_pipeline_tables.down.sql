@@ -6,4 +6,3 @@ DROP TABLE IF EXISTS stage_feedback;
 DROP TABLE IF EXISTS candidate_stage_progress;
 DROP TABLE IF EXISTS pipeline_assignments;
 DROP TABLE IF EXISTS pipelines;
-DROP TABLE IF EXISTS tenants;

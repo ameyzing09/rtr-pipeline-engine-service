@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build -o bin/app cmd/main.go)",
+      "Read(//c/Projects/rtr-user-auth-service/**)",
+      "Bash(go mod tidy)",
+      "Bash(go build -o bin/server.exe ./cmd/server)",
+      "Read(//c/Projects/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

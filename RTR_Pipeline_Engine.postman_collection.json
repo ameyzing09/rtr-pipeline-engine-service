@@ -1,0 +1,175 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "RTR Pipeline Engine Service",
+		"description": "API collection for RTR Pipeline Engine Service with JWT authentication and tenant-based access control.\n\n## Authentication\n- All endpoints require JWT authentication via Authorization header\n- All endpoints require X-Tenant-ID header\n- Rate limit: 60 requests per minute per IP + Tenant combination\n\n## Roles\n- ADMIN: Full access to all endpoints\n- HR: Can create, list, and assign pipelines\n- INTERVIEWER: Read-only access to list pipelines",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Pipeline Management",
+			"item": [
+				{
+					"name": "Create Pipeline",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}",
+								"type": "text",
+								"description": "Tenant ID (must match JWT tenant claim)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Software Engineer Pipeline\",\n  \"description\": \"Standard pipeline for software engineering positions\",\n  \"stages\": [\n    {\n      \"stage\": \"Phone Screen\",\n      \"type\": \"phone\"\n    },\n    {\n      \"stage\": \"Technical Interview\",\n      \"type\": \"technical\"\n    },\n    {\n      \"stage\": \"System Design\",\n      \"type\": \"system_design\"\n    },\n    {\n      \"stage\": \"Behavioral Interview\",\n      \"type\": \"behavioral\"\n    },\n    {\n      \"stage\": \"Final Offer\",\n      \"type\": \"offer\"\n    }\n  ],\n  \"extra\": {\n    \"department\": \"Engineering\",\n    \"priority\": \"high\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/pipeline",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pipeline"
+							]
+						},
+						"description": "Creates a new pipeline for the tenant.\n\n**Required Role:** ADMIN or HR\n\n**Request Body:**\n- `name` (string, required): Pipeline name (3-255 characters)\n- `description` (string, optional): Pipeline description (max 1000 characters)\n- `stages` (array, required): Array of stage objects (1-10 stages)\n  - `stage` (string, required): Stage name (1-100 characters)\n  - `type` (string, required): One of: phone, technical, system_design, behavioral, offer\n- `extra` (object, optional): Custom tenant-specific fields\n\n**Response:** 200 OK with created pipeline object"
+					},
+					"response": []
+				},
+				{
+					"name": "List Pipelines",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}",
+								"type": "text",
+								"description": "Tenant ID (must match JWT tenant claim)"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pipeline",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pipeline"
+							]
+						},
+						"description": "Retrieves all pipelines for the tenant.\n\n**Required Role:** ADMIN, HR, or INTERVIEWER (read-only)\n\n**Response:** 200 OK with array of pipeline objects"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Pipeline to Job",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}",
+								"type": "text",
+								"description": "Tenant ID (must match JWT tenant claim)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pipeline_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"job_id\": \"987fcdeb-51a2-43f7-8d6e-9b8c7a654321\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/pipeline/assign",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pipeline",
+								"assign"
+							]
+						},
+						"description": "Assigns a pipeline to a specific job.\n\n**Required Role:** ADMIN or HR\n\n**Request Body:**\n- `pipeline_id` (string, required): UUID of the pipeline to assign\n- `job_id` (string, required): UUID of the job to assign the pipeline to\n\n**Response:** 201 Created with success message"
+					},
+					"response": []
+				}
+			],
+			"description": "Pipeline management endpoints for creating, listing, and assigning pipelines."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		},
+		{
+			"key": "tenant_id",
+			"value": "your-tenant-id-here",
+			"type": "string"
+		}
+	]
+}

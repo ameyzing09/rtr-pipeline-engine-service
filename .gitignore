@@ -1,1 +1,10 @@
 .env
+
+# Air tmp directory
+tmp/
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib

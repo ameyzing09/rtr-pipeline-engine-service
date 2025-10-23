@@ -31,7 +31,8 @@ type CreatePipelineDTO struct {
 	// Pipeline description (optional, max 1000 characters)
 	Description string `json:"description" binding:"omitempty,max=1000"`
 
-	// Pipeline stages (required, at least 1 stage)
+	// Pipeline stages (required, at least 1 stage; no maximum limit)
+	// The previous maximum of 10 stages has been intentionally removed to give tenants more flexibility
 	// Each stage must be valid (nested validation with 'dive')
 	Stages []Stage `json:"stages" binding:"required,min=1,dive"`
 

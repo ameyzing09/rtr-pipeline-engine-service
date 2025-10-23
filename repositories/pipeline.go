@@ -109,10 +109,15 @@ func (r *gormPipelineRepo) Update(ctx context.Context, pipeline *models.Pipeline
 		return gorm.ErrDuplicatedKey
 	}
 
-	// Update the pipeline (GORM will only update non-zero fields)
+	// Update the pipeline using a map to ensure zero-value fields are updated
 	return r.db.WithContext(ctx).
 		Model(&existing).
-		Updates(pipeline).Error
+		Updates(map[string]interface{}{
+			"name":        pipeline.Name,
+			"description": pipeline.Description,
+			"stages":      pipeline.Stages,
+			"is_active":   pipeline.IsActive,
+		}).Error
 }
 
 // CreateAssignment creates a new pipeline assignment

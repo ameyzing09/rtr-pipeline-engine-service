@@ -29,7 +29,9 @@ func RespondWithError(c *gin.Context, statusCode int, code, message, details str
 
 // RespondWithSuccess sends a standardized success response
 func RespondWithSuccess(c *gin.Context, statusCode int, data interface{}) {
-	c.JSON(statusCode, data)
+	c.JSON(statusCode, SuccessResponse{
+		Data: data,
+	})
 }
 
 // RespondWithMessage sends a simple success message

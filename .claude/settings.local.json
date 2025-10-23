@@ -5,7 +5,11 @@
       "Read(//c/Projects/rtr-user-auth-service/**)",
       "Bash(go mod tidy)",
       "Bash(go build -o bin/server.exe ./cmd/server)",
-      "Read(//c/Projects/**)"
+      "Read(//c/Projects/**)",
+      "Bash(gh pr view:*)",
+      "Bash(git remote:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": [],
     "ask": []

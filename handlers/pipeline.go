@@ -58,6 +58,88 @@ func (h *PipelineHandler) CreatePipeline(c *gin.Context) {
 	c.JSON(http.StatusOK, pipeline)
 }
 
+func (h *PipelineHandler) GetPipelineByID(c *gin.Context) {
+	// Get request context (contains tenant ID from JWT)
+	requestCtx, exists := middleware.GetRequestContext(c)
+	if !exists {
+		httpx.HandleError(c, domain.ErrMissingTenantID)
+		return
+	}
+
+	// Get pipeline ID from URL parameter
+	pipelineID := c.Param("id")
+	if pipelineID == "" {
+		httpx.HandleError(c, domain.ErrInvalidRequest)
+		return
+	}
+
+	pipeline, err := h.pipelineService.GetPipelineByID(c.Request.Context(), requestCtx.TenantID, pipelineID)
+	if err != nil {
+		httpx.HandleError(c, err)
+		return
+	}
+
+	httpx.RespondWithSuccess(c, http.StatusOK, pipeline)
+}
+
+func (h *PipelineHandler) UpdatePipeline(c *gin.Context) {
+	// Get request context (contains tenant ID and user ID from JWT)
+	requestCtx, exists := middleware.GetRequestContext(c)
+	if !exists {
+		httpx.HandleError(c, domain.ErrMissingTenantID)
+		return
+	}
+
+	// Get pipeline ID from URL parameter
+	pipelineID := c.Param("id")
+	if pipelineID == "" {
+		httpx.HandleError(c, domain.ErrInvalidRequest)
+		return
+	}
+
+	// Bind and validate update DTO
+	var updateBody UpdatePipelineDTO
+	if err := c.ShouldBindJSON(&updateBody); err != nil {
+		httpx.HandleBindingError(c, err)
+		return
+	}
+
+	// Fetch existing pipeline to merge updates
+	existing, err := h.pipelineService.GetPipelineByID(c.Request.Context(), requestCtx.TenantID, pipelineID)
+	if err != nil {
+		httpx.HandleError(c, err)
+		return
+	}
+
+	// Merge updates: only update fields that are provided
+	if updateBody.Name != nil {
+		existing.Name = *updateBody.Name
+	}
+	if updateBody.Description != nil {
+		existing.Description = *updateBody.Description
+	}
+	if updateBody.Stages != nil {
+		stagesJSON, err := json.Marshal(*updateBody.Stages)
+		if err != nil {
+			httpx.HandleError(c, domain.ErrValidationFailed)
+			return
+		}
+		existing.Stages = stagesJSON
+	}
+
+	// Set updated_by from JWT context
+	existing.UpdatedBy = requestCtx.UserID
+
+	// Update the pipeline
+	if err := h.pipelineService.UpdatePipeline(c.Request.Context(), existing); err != nil {
+		httpx.HandleError(c, err)
+		return
+	}
+
+	// Return updated pipeline
+	httpx.RespondWithSuccess(c, http.StatusOK, existing)
+}
+
 func (h *PipelineHandler) ListPipelines(c *gin.Context) {
 	// Get request context (contains tenant ID from JWT)
 	requestCtx, exists := middleware.GetRequestContext(c)

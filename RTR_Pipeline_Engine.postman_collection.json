@@ -34,7 +34,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Software Engineer Pipeline\",\n  \"description\": \"Standard pipeline for software engineering positions\",\n  \"stages\": [\n    {\n      \"stage\": \"Phone Screen\",\n      \"type\": \"phone\"\n    },\n    {\n      \"stage\": \"Technical Interview\",\n      \"type\": \"technical\"\n    },\n    {\n      \"stage\": \"System Design\",\n      \"type\": \"system_design\"\n    },\n    {\n      \"stage\": \"Behavioral Interview\",\n      \"type\": \"behavioral\"\n    },\n    {\n      \"stage\": \"Final Offer\",\n      \"type\": \"offer\"\n    }\n  ],\n  \"extra\": {\n    \"department\": \"Engineering\",\n    \"priority\": \"high\"\n  }\n}",
+							"raw": "{\n  \"name\": \"Software Engineer Pipeline\",\n  \"description\": \"Standard pipeline for software engineering positions\",\n  \"stages\": [\n    {\n      \"stage\": \"Phone Screen\",\n      \"type\": \"phone\",\n      \"conducted_by\": \"hr\"\n    },\n    {\n      \"stage\": \"Technical Interview\",\n      \"type\": \"technical\",\n      \"conducted_by\": \"interviewer\"\n    },\n    {\n      \"stage\": \"System Design\",\n      \"type\": \"system_design\",\n      \"conducted_by\": \"interviewer\"\n    },\n    {\n      \"stage\": \"Behavioral Interview\",\n      \"type\": \"behavioral\",\n      \"conducted_by\": \"interviewer\"\n    },\n    {\n      \"stage\": \"Final Offer\",\n      \"type\": \"offer\",\n      \"conducted_by\": \"auto\"\n    }\n  ],\n  \"extra\": {\n    \"department\": \"Engineering\",\n    \"priority\": \"high\"\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -50,7 +50,7 @@
 								"pipeline"
 							]
 						},
-						"description": "Creates a new pipeline for the tenant.\n\n**Required Role:** ADMIN or HR\n\n**Request Body:**\n- `name` (string, required): Pipeline name (3-255 characters)\n- `description` (string, optional): Pipeline description (max 1000 characters)\n- `stages` (array, required): Array of stage objects (1-10 stages)\n  - `stage` (string, required): Stage name (1-100 characters)\n  - `type` (string, required): One of: phone, technical, system_design, behavioral, offer\n- `extra` (object, optional): Custom tenant-specific fields\n\n**Response:** 200 OK with created pipeline object"
+						"description": "Creates a new pipeline for the tenant.\n\n**Required Role:** ADMIN or HR\n\n**Validation Rules:**\n- `name` (string, required): Pipeline name (3-255 characters)\n- `description` (string, optional): Pipeline description (max 1000 characters)\n- `stages` (array, required): Array of stage objects (minimum 1 stage)\n  - `stage` (string, required): Stage name (1-100 characters)\n  - `type` (string, required): Stage type (1-50 characters)\n  - `conducted_by` (string, required): Who conducts this stage (1-50 characters)\n  - `metadata` (object, optional): Custom metadata for the stage\n- `extra` (object, optional): Custom tenant-specific fields\n\n**Response:** 200 OK with created pipeline object\n**Error:** 400 Bad Request if validation fails"
 					},
 					"response": []
 				},
@@ -82,6 +82,98 @@
 							]
 						},
 						"description": "Retrieves all pipelines for the tenant.\n\n**Required Role:** ADMIN, HR, or INTERVIEWER (read-only)\n\n**Response:** 200 OK with array of pipeline objects"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pipeline by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}",
+								"type": "text",
+								"description": "Tenant ID (must match JWT tenant claim)"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pipeline/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pipeline",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "123e4567-e89b-12d3-a456-426614174000",
+									"description": "Pipeline ID (UUID)"
+								}
+							]
+						},
+						"description": "Retrieves a single pipeline by ID for the tenant.\n\n**Required Role:** ADMIN, HR, or INTERVIEWER (read-only)\n\n**Response:** 200 OK with pipeline object\n\n**Error Responses:**\n- 404 NOT FOUND: Pipeline not found or not accessible by tenant"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Pipeline",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text",
+								"description": "JWT token for authentication"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}",
+								"type": "text",
+								"description": "Tenant ID (must match JWT tenant claim)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Pipeline Name\",\n  \"description\": \"Updated description\",\n  \"stages\": [\n    {\n      \"stage\": \"Phone Screen\",\n      \"type\": \"phone\",\n      \"conducted_by\": \"hr\"\n    },\n    {\n      \"stage\": \"Technical Interview\",\n      \"type\": \"technical\",\n      \"conducted_by\": \"interviewer\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/pipeline/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pipeline",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "123e4567-e89b-12d3-a456-426614174000",
+									"description": "Pipeline ID (UUID)"
+								}
+							]
+						},
+						"description": "Updates an existing pipeline. Supports partial updates - send only the fields you want to change.\n\n**Required Role:** ADMIN or HR\n\n**Validation Rules (all optional):**\n- `name` (string, optional): Pipeline name (3-255 characters)\n- `description` (string, optional): Pipeline description (max 1000 characters)\n- `stages` (array, optional): Array of stage objects (minimum 1 stage)\n\n**Response:** 200 OK with updated pipeline object\n**Errors:** 400 Bad Request, 404 Not Found, 409 Conflict (duplicate name)"
 					},
 					"response": []
 				},

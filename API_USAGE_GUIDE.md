@@ -25,7 +25,7 @@ Note: The x-tenant-id must match the tenant_id claim in the JWT token, or the re
 #### Create Pipeline (ADMIN/HR only)
 
 ```bash
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID" \
   -H "Content-Type: application/json" \
@@ -33,16 +33,25 @@ curl -X POST http://localhost:8081/api/pipeline/ \
     "name": "Senior Engineer Pipeline",
     "description": "Interview pipeline for senior positions",
     "stages": [
-      {"stage": "Phone Screen", "type": "phone"},
-      {"stage": "Technical Interview", "type": "technical"},
-      {"stage": "System Design", "type": "system_design"},
-      {"stage": "Behavioral", "type": "behavioral"},
-      {"stage": "Offer"}
+      {"stage": "Phone Screen", "type": "phone", "conducted_by": "hr"},
+      {"stage": "Technical Interview", "type": "technical", "conducted_by": "interviewer"},
+      {"stage": "System Design", "type": "system_design", "conducted_by": "interviewer"},
+      {"stage": "Behavioral", "type": "behavioral", "conducted_by": "interviewer"},
+      {"stage": "Offer", "type": "offer", "conducted_by": "auto"}
     ]
   }'
 ```
 
-**Response (201 Created):**
+**Validation Rules:**
+- `name`: Required, 3-255 characters
+- `description`: Optional, max 1000 characters
+- `stages`: Required array with at least 1 stage
+  - `stage`: Required, 1-100 characters (stage name)
+  - `type`: Required, 1-50 characters (stage type)
+  - `conducted_by`: Required, 1-50 characters (who conducts this stage)
+  - `metadata`: Optional object for custom fields
+
+**Response (200 OK):**
 ```json
 {
   "id": "pipeline-uuid",
@@ -56,10 +65,32 @@ curl -X POST http://localhost:8081/api/pipeline/ \
 }
 ```
 
+**Error Response (400 Bad Request - Validation Failed):**
+```json
+{
+  "code": "VALIDATION_ERROR",
+  "message": "Invalid request payload",
+  "status_code": 400,
+  "details": "Field validation errors: Name - This field is required, Stages - Value is too short (minimum: 1)"
+}
+```
+
+**Error Response (409 Conflict - Duplicate Pipeline Name):**
+```json
+{
+  "code": "DUPLICATE_PIPELINE",
+  "message": "Pipeline with this name already exists",
+  "status_code": 409,
+  "details": "A pipeline with this name already exists for your tenant. Please use a different name."
+}
+```
+
+**Note:** Pipeline names must be unique within a tenant. The uniqueness constraint is enforced on (tenant_id, name).
+
 #### List Pipelines (All roles, INTERVIEWER read-only)
 
 ```bash
-curl -X GET http://localhost:8081/api/pipeline/ \
+curl -X GET http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID"
 ```
@@ -88,10 +119,111 @@ curl -X GET http://localhost:8081/api/pipeline/ \
 ]
 ```
 
+#### Get Pipeline by ID (All roles, INTERVIEWER read-only)
+
+```bash
+curl -X GET http://localhost:8081/pipeline/{pipeline-id} \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "x-tenant-id: $TENANT_ID"
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": "pipeline-uuid-1",
+  "tenant_id": "tenant-uuid",
+  "name": "Senior Engineer Pipeline",
+  "description": "Interview pipeline for senior positions",
+  "stages": "[...]",
+  "is_active": true,
+  "is_deleted": false,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "code": "PIPELINE_NOT_FOUND",
+  "message": "Pipeline not found",
+  "status_code": 404,
+  "details": "The requested pipeline does not exist or you don't have access to it"
+}
+```
+
+#### Update Pipeline (ADMIN/HR only)
+
+**Partial Update Support:** You can update just the fields you want to change (name, description, or stages).
+
+```bash
+# Update only the name
+curl -X PATCH http://localhost:8081/pipeline/{pipeline-id} \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "x-tenant-id: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Pipeline Name"
+  }'
+
+# Update only stages
+curl -X PATCH http://localhost:8081/pipeline/{pipeline-id} \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "x-tenant-id: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stages": [
+      {"stage": "New Stage 1", "type": "technical", "conducted_by": "interviewer"},
+      {"stage": "New Stage 2", "type": "behavioral", "conducted_by": "hr"}
+    ]
+  }'
+
+# Update multiple fields
+curl -X PATCH http://localhost:8081/pipeline/{pipeline-id} \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "x-tenant-id: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Senior Engineer Pipeline v2",
+    "description": "Updated description",
+    "stages": [
+      {"stage": "Phone Screen", "type": "phone", "conducted_by": "hr"},
+      {"stage": "Technical Interview", "type": "technical", "conducted_by": "interviewer"}
+    ]
+  }'
+```
+
+**Validation Rules:**
+- `name`: Optional, if provided: 3-255 characters
+- `description`: Optional, if provided: max 1000 characters
+- `stages`: Optional, if provided: min 1 stage with nested validation
+
+**Response (200 OK):**
+```json
+{
+  "id": "pipeline-uuid-1",
+  "tenant_id": "tenant-uuid",
+  "name": "Updated Pipeline Name",
+  "description": "Updated description",
+  "stages": "[...]",
+  "is_active": true,
+  "is_deleted": false,
+  "created_by": "user-123",
+  "updated_by": "user-456",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T14:20:00Z"
+}
+```
+
+**Error Responses:**
+- **404 Not Found:** Pipeline doesn't exist or not accessible
+- **409 Conflict:** Duplicate pipeline name
+- **400 Bad Request:** Validation failed
+
 #### Assign Pipeline (ADMIN/HR only)
 
 ```bash
-curl -X POST http://localhost:8081/api/pipeline/assign \
+curl -X POST http://localhost:8081/pipeline/assign \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID" \
   -H "Content-Type: application/json" \
@@ -107,6 +239,27 @@ curl -X POST http://localhost:8081/api/pipeline/assign \
   "message": "Pipeline assigned successfully"
 }
 ```
+
+---
+
+## Standardized Error Response Format
+
+All error responses follow a consistent JSON structure:
+
+```json
+{
+  "code": "ERROR_CODE",
+  "message": "Human-readable error message",
+  "status_code": 400,
+  "details": "Additional context or technical details (optional)"
+}
+```
+
+**Fields:**
+- `code`: Machine-readable error code (e.g., "VALIDATION_ERROR", "PIPELINE_NOT_FOUND")
+- `message`: Human-readable error message
+- `status_code`: HTTP status code (matches the response status)
+- `details`: Additional context or technical details (omitted if empty)
 
 ---
 
@@ -221,7 +374,7 @@ node token_generator.js
 JWT_TOKEN="<token-from-generator>"
 TENANT_ID="tenant-456"
 
-curl -v -X GET http://localhost:8081/api/pipeline/ \
+curl -v -X GET http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID" \
   -H "Content-Type: application/json"
@@ -236,8 +389,34 @@ curl -v -X GET http://localhost:8081/api/pipeline/ \
 | Operation | ADMIN | HR | INTERVIEWER |
 |-----------|-------|----|----|
 | List Pipelines | ✓ | ✓ | ✓ (read-only) |
+| Get Pipeline by ID | ✓ | ✓ | ✓ (read-only) |
 | Create Pipeline | ✓ | ✓ | ✗ |
+| Update Pipeline | ✓ | ✓ | ✗ |
 | Assign Pipeline | ✓ | ✓ | ✗ |
+
+---
+
+## Request Logging
+
+All HTTP requests are logged with the following information:
+
+- **method**: HTTP method (GET, POST, etc.)
+- **path**: Request path (e.g., /pipeline/123)
+- **status**: HTTP response status code
+- **duration**: Request processing time
+- **tenant_id**: Tenant ID from JWT (or "unknown" if not authenticated)
+- **user_id**: User ID from JWT (or "unknown" if not authenticated)
+- **ip**: Client IP address
+
+**Example log output:**
+```
+[INFO] [HTTP] method=GET path=/pipeline/123 status=200 duration=45ms tenant_id=tenant-456 user_id=user-123 ip=192.168.1.100
+```
+
+**Log Levels:**
+- Set via `LOG_LEVEL` environment variable
+- Options: `debug`, `info`, `warn`, `error`
+- Default: `info`
 
 ---
 

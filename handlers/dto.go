@@ -31,12 +31,26 @@ type CreatePipelineDTO struct {
 	// Pipeline description (optional, max 1000 characters)
 	Description string `json:"description" binding:"omitempty,max=1000"`
 
-	// Pipeline stages (required, at least 1 stage, max 10 stages)
+	// Pipeline stages (required, at least 1 stage; no maximum limit)
+	// The previous maximum of 10 stages has been intentionally removed to give tenants more flexibility
 	// Each stage must be valid (nested validation with 'dive')
-	Stages []Stage `json:"stages" binding:"required,min=1,max=10,dive"`
+	Stages []Stage `json:"stages" binding:"required,min=1,dive"`
 
 	// Custom tenant-specific fields (optional, will be validated against tenant schema)
 	Extra map[string]interface{} `json:"extra" binding:"omitempty"`
+}
+
+// UpdatePipelineDTO for updating an existing pipeline
+// All fields are optional - send only what you want to update
+type UpdatePipelineDTO struct {
+	// Pipeline name (optional, if provided: 3-255 characters)
+	Name *string `json:"name" binding:"omitempty,min=3,max=255"`
+
+	// Pipeline description (optional, if provided: max 1000 characters)
+	Description *string `json:"description" binding:"omitempty,max=1000"`
+
+	// Pipeline stages (optional, if provided: at least 1 stage with validation)
+	Stages *[]Stage `json:"stages" binding:"omitempty,min=1,dive"`
 }
 
 // PipelineAssignmentDTO for assigning a pipeline to a job

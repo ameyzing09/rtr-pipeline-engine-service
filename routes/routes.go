@@ -28,6 +28,16 @@ func RegisterRoutes(r *gin.Engine, pipelineHandler *handlers.PipelineHandler) {
 			middleware.AllowReadOnly(),
 			pipelineHandler.ListPipelines)
 
+		// GET /pipeline/:id - Get pipeline by ID (all roles, INTERVIEWER read-only via middleware)
+		pipeline.GET("/:id",
+			middleware.AllowReadOnly(),
+			pipelineHandler.GetPipelineByID)
+
+		// PATCH /pipeline/:id - Update pipeline (ADMIN/HR only)
+		pipeline.PATCH("/:id",
+			middleware.RequireRoles(models.RoleAdmin, models.RoleHR),
+			pipelineHandler.UpdatePipeline)
+
 		// POST /pipeline/assign - Assign pipeline (ADMIN/HR only)
 		pipeline.POST("/assign",
 			middleware.RequireRoles(models.RoleAdmin, models.RoleHR),

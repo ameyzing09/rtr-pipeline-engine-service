@@ -17,7 +17,8 @@ var (
 
 	// Resource errors
 	ErrPipelineNotFound = errors.New("pipeline not found")
-	ErrJobNotFound      = errors.New("job not found")
+	ErrDuplicatePipeline = errors.New("pipeline with this name already exists")
+	ErrJobNotFound       = errors.New("job not found")
 
 	// Database errors
 	ErrDatabaseOperation = errors.New("database operation failed")

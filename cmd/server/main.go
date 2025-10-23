@@ -121,6 +121,9 @@ func setupRouter(hndlrs *handlersContainer, cfg *config.Config) *gin.Engine {
 	// Layer 1: Tenant validation - Validate tenant ID header and cross-check with JWT
 	router.Use(middleware.TenantMiddleware())
 
+	// Request/Response Logger - Log all requests with tenant_id, user_id, route, status
+	router.Use(middleware.LoggerMiddleware())
+
 	// Register routes
 	routes.RegisterRoutes(router, hndlrs.PipelineHandler)
 

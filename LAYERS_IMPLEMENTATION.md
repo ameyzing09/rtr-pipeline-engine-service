@@ -387,7 +387,7 @@ pipeline.POST("/assign",
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer eyJhbG..." \
   -H "x-tenant-id: 550e8400-e29b-41d4-a716-446655440000" \
   -H "Content-Type: application/json" \
@@ -426,7 +426,7 @@ curl -X POST http://localhost:8081/api/pipeline/ \
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer eyJhbG..." \
   -H "x-tenant-id: 550e8400-e29b-41d4-a716-446655440000" \
   -H "Content-Type: application/json" \
@@ -488,7 +488,7 @@ curl -X POST http://localhost:8081/api/pipeline/ \
 ```bash
 # Make 61 requests in 60 seconds - last one should get 429
 for i in {1..61}; do
-  curl -X GET http://localhost:8081/api/pipeline/ \
+  curl -X GET http://localhost:8081/pipeline \
     -H "Authorization: Bearer $JWT_TOKEN" \
     -H "x-tenant-id: $TENANT_ID"
 done
@@ -497,7 +497,7 @@ done
 ### Layer 4: Strict JSON
 ```bash
 # Send extra field
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID" \
   -d '{"name": "Test", "stages": [], "extra_field": "value"}'
@@ -507,7 +507,7 @@ curl -X POST http://localhost:8081/api/pipeline/ \
 ### Layer 5: DTO Validation
 ```bash
 # Send invalid stage type
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID" \
   -d '{"name": "Test", "stages": [{"stage": "Test", "type": "invalid_type"}]}'
@@ -517,7 +517,7 @@ curl -X POST http://localhost:8081/api/pipeline/ \
 ### Layer 7: RBAC
 ```bash
 # INTERVIEWER trying to POST (should be read-only)
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN_INTERVIEWER" \
   -H "x-tenant-id: $TENANT_ID" \
   -d '{"name": "Test", "stages": [...]}'

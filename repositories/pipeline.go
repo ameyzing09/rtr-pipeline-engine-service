@@ -12,6 +12,7 @@ type PipelineRepository interface {
 	Create(ctx context.Context, pipeline *models.Pipeline) error
 	FindByTenant(ctx context.Context, tenantID string) ([]models.Pipeline, error)
 	FindByID(ctx context.Context, tenantID, pipelineID string) (*models.Pipeline, error)
+	Update(ctx context.Context, pipeline *models.Pipeline) error
 	CreateAssignment(ctx context.Context, assignment *models.PipelineAssignment) error
 }
 
@@ -74,6 +75,44 @@ func (r *gormPipelineRepo) FindByID(ctx context.Context, tenantID, pipelineID st
 	}
 
 	return &pipeline, nil
+}
+
+// Update updates an existing pipeline
+func (r *gormPipelineRepo) Update(ctx context.Context, pipeline *models.Pipeline) error {
+	// First check if pipeline exists and belongs to tenant
+	var existing models.Pipeline
+	err := r.db.WithContext(ctx).
+		Where(map[string]interface{}{
+			"id":         pipeline.ID,
+			"tenant_id":  pipeline.TenantID,
+			"is_deleted": false,
+		}).
+		First(&existing).Error
+
+	if err != nil {
+		return err // Will be gorm.ErrRecordNotFound if not found
+	}
+
+	// Check for duplicate pipeline name within tenant (excluding current pipeline)
+	var count int64
+	err = r.db.WithContext(ctx).
+		Model(&models.Pipeline{}).
+		Where("tenant_id = ? AND name = ? AND id != ? AND is_deleted = ?",
+			pipeline.TenantID, pipeline.Name, pipeline.ID, false).
+		Count(&count).Error
+
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return gorm.ErrDuplicatedKey
+	}
+
+	// Update the pipeline (GORM will only update non-zero fields)
+	return r.db.WithContext(ctx).
+		Model(&existing).
+		Updates(pipeline).Error
 }
 
 // CreateAssignment creates a new pipeline assignment

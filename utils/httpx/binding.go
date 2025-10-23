@@ -14,17 +14,34 @@ func HandleBindingError(c *gin.Context, err error) {
 		for _, fieldErr := range validationErrs {
 			errors[fieldErr.Field()] = getValidationErrorMessage(fieldErr)
 		}
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":  "Validation failed",
-			"fields": errors,
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Code:       "VALIDATION_ERROR",
+			Message:    "Invalid request payload",
+			StatusCode: http.StatusBadRequest,
+			Details:    formatValidationErrors(errors),
 		})
 		return
 	}
 
 	// Generic binding error
-	c.JSON(http.StatusBadRequest, gin.H{
-		"error": "Invalid request format: " + err.Error(),
-	})
+	RespondWithError(c, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid request payload", err.Error())
+}
+
+// formatValidationErrors formats validation errors into a readable string
+func formatValidationErrors(errors map[string]string) string {
+	if len(errors) == 0 {
+		return ""
+	}
+	result := "Field validation errors: "
+	first := true
+	for field, msg := range errors {
+		if !first {
+			result += ", "
+		}
+		result += field + " - " + msg
+		first = false
+	}
+	return result
 }
 
 // getValidationErrorMessage returns a human-readable error message for validation errors

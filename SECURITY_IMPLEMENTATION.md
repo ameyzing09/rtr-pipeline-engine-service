@@ -248,9 +248,9 @@ if exists {
 
 | Method | Route | Auth | Role | Description |
 |--------|-------|------|------|-------------|
-| POST | `/api/pipeline/` | Required | ADMIN, HR | Create new pipeline |
-| GET | `/api/pipeline/` | Required | All | List pipelines (INTERVIEWER read-only) |
-| POST | `/api/pipeline/assign` | Required | ADMIN, HR | Assign pipeline to job |
+| POST | `/pipeline` | Required | ADMIN, HR | Create new pipeline |
+| GET | `/pipeline` | Required | All | List pipelines (INTERVIEWER read-only) |
+| POST | `/pipeline/assign` | Required | ADMIN, HR | Assign pipeline to job |
 
 **Route Implementation:**
 
@@ -309,7 +309,7 @@ JWT_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 TENANT_ID="550e8400-e29b-41d4-a716-446655440000"
 
 # Create pipeline
-curl -X POST http://localhost:8081/api/pipeline/ \
+curl -X POST http://localhost:8081/pipeline \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "x-tenant-id: $TENANT_ID" \
   -H "Content-Type: application/json" \

@@ -28,7 +28,8 @@ func RequireRoles(allowedRoles ...models.Role) gin.HandlerFunc {
 			utils.Warn("[RequireRoles] Insufficient permissions: user=%s, role=%s, required=%v",
 				requestCtx.UserID, requestCtx.Role, allowedRoles)
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient permissions",
+				"error": "Insufficient permissions for this operation",
+				"code":  "FORBIDDEN",
 			})
 			c.Abort()
 			return
@@ -46,6 +47,11 @@ func RequireAdmin() gin.HandlerFunc {
 // RequireAdminOrHR creates middleware that restricts access to ADMIN or HR roles
 func RequireAdminOrHR() gin.HandlerFunc {
 	return RequireRoles(models.RoleAdmin, models.RoleHR)
+}
+
+// RequireSuperAdmin creates middleware that restricts access to SUPERADMIN role only
+func RequireSuperAdmin() gin.HandlerFunc {
+	return RequireRoles(models.RoleSuperAdmin)
 }
 
 // RequireAdminOrHROrInterviewer creates middleware that allows access to all roles

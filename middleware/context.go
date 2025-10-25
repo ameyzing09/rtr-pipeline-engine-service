@@ -53,3 +53,8 @@ func (rc *RequestContext) IsHR() bool {
 func (rc *RequestContext) IsInterviewer() bool {
 	return rc.Role == models.RoleInterviewer
 }
+
+// IsSuperAdmin returns true if user is SUPERADMIN
+func (rc *RequestContext) IsSuperAdmin() bool {
+	return rc.Role == models.RoleSuperAdmin
+}

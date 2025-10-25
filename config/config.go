@@ -12,12 +12,13 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	Logging  LoggingConfig
-	CORS     CORSConfig
-	RateLimit RateLimitConfig
+	Server                   ServerConfig
+	Database                 DatabaseConfig
+	JWT                      JWTConfig
+	Logging                  LoggingConfig
+	CORS                     CORSConfig
+	RateLimit                RateLimitConfig
+	PipelineDefaultsEnabled  bool
 }
 
 // ServerConfig contains server-related settings
@@ -79,12 +80,13 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		Server:    loadServerConfig(),
-		Database:  loadDatabaseConfig(),
-		JWT:       loadJWTConfig(),
-		Logging:   loadLoggingConfig(),
-		CORS:      loadCORSConfig(),
-		RateLimit: loadRateLimitConfig(),
+		Server:                  loadServerConfig(),
+		Database:                loadDatabaseConfig(),
+		JWT:                     loadJWTConfig(),
+		Logging:                 loadLoggingConfig(),
+		CORS:                    loadCORSConfig(),
+		RateLimit:               loadRateLimitConfig(),
+		PipelineDefaultsEnabled: getEnvAsBool("PIPELINE_DEFAULTS_ENABLED", true),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -198,6 +200,15 @@ func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 	if val := os.Getenv(key); val != "" {
 		if duration, err := time.ParseDuration(val); err == nil {
 			return duration
+		}
+	}
+	return defaultValue
+}
+
+func getEnvAsBool(key string, defaultValue bool) bool {
+	if val := os.Getenv(key); val != "" {
+		if boolVal, err := strconv.ParseBool(val); err == nil {
+			return boolVal
 		}
 	}
 	return defaultValue

@@ -7,6 +7,7 @@ const (
 	RoleAdmin       Role = "ADMIN"
 	RoleHR          Role = "HR"
 	RoleInterviewer Role = "INTERVIEWER"
+	RoleSuperAdmin  Role = "SUPERADMIN"
 )
 
 // String returns the string representation of the role

@@ -42,21 +42,51 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 		tenantID := "unknown"
 		userID := "unknown"
+		role := "unknown"
 		if exists {
 			tenantID = requestCtx.TenantID
 			userID = requestCtx.UserID
+			role = string(requestCtx.Role)
 		}
 
-		// Log request details
+		// Get request ID if available
+		requestID := c.GetString("request_id")
+		if requestID == "" {
+			requestID = "-"
+		}
+
+		// Get target tenant for cross-tenant operations
+		targetTenant, hasTenantTarget := GetTargetTenantID(c)
+		if !hasTenantTarget {
+			targetTenant = tenantID
+		}
+
+		// Log request details with comprehensive audit information
 		utils.Info(
-			"[HTTP] method=%s path=%s status=%d duration=%s tenant_id=%s user_id=%s ip=%s",
+			"[HTTP] request_id=%s method=%s path=%s status=%d duration=%s "+
+				"tenant_id=%s user_id=%s role=%s target_tenant=%s ip=%s",
+			requestID,
 			c.Request.Method,
 			c.Request.URL.Path,
 			wrapped.statusCode,
 			duration,
 			tenantID,
 			userID,
+			role,
+			targetTenant,
 			c.ClientIP(),
 		)
+
+		// Log errors separately for easier monitoring
+		if wrapped.statusCode >= 400 {
+			utils.Warn(
+				"[HTTP_ERROR] request_id=%s status=%d path=%s user=%s tenant=%s",
+				requestID,
+				wrapped.statusCode,
+				c.Request.URL.Path,
+				userID,
+				tenantID,
+			)
+		}
 	}
 }

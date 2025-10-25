@@ -12,8 +12,11 @@ type PipelineRepository interface {
 	Create(ctx context.Context, pipeline *models.Pipeline) error
 	FindByTenant(ctx context.Context, tenantID string) ([]models.Pipeline, error)
 	FindByID(ctx context.Context, tenantID, pipelineID string) (*models.Pipeline, error)
+	FindByTenantAndName(ctx context.Context, tenantID, name string) (*models.Pipeline, error)
 	Update(ctx context.Context, pipeline *models.Pipeline) error
+	BulkCreatePipelines(ctx context.Context, pipelines []*models.Pipeline) error
 	CreateAssignment(ctx context.Context, assignment *models.PipelineAssignment) error
+	FindAssignmentByJob(ctx context.Context, tenantID, jobID string) (*models.PipelineAssignment, error)
 }
 
 // gormPipelineRepo is the concrete GORM implementation of PipelineRepository
@@ -138,4 +141,74 @@ func (r *gormPipelineRepo) CreateAssignment(ctx context.Context, assignment *mod
 	}
 
 	return r.db.WithContext(ctx).Create(assignment).Error
+}
+
+// FindByTenantAndName finds a pipeline by tenant ID and name
+func (r *gormPipelineRepo) FindByTenantAndName(ctx context.Context, tenantID, name string) (*models.Pipeline, error) {
+	var pipeline models.Pipeline
+	err := r.db.WithContext(ctx).
+		Where(map[string]interface{}{
+			"tenant_id":  tenantID,
+			"name":       name,
+			"is_deleted": false,
+		}).
+		First(&pipeline).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pipeline, nil
+}
+
+// BulkCreatePipelines creates multiple pipelines in a single transaction
+func (r *gormPipelineRepo) BulkCreatePipelines(ctx context.Context, pipelines []*models.Pipeline) error {
+	if len(pipelines) == 0 {
+		return nil
+	}
+
+	// Use a transaction to ensure atomicity
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, pipeline := range pipelines {
+			// Check for duplicate before inserting
+			var count int64
+			err := tx.Model(&models.Pipeline{}).
+				Where("tenant_id = ? AND name = ? AND is_deleted = ?", pipeline.TenantID, pipeline.Name, false).
+				Count(&count).Error
+
+			if err != nil {
+				return err
+			}
+
+			if count > 0 {
+				// Skip duplicate pipelines (idempotent behavior)
+				continue
+			}
+
+			// Create the pipeline
+			if err := tx.Create(pipeline).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+// FindAssignmentByJob finds a pipeline assignment by job ID and tenant
+func (r *gormPipelineRepo) FindAssignmentByJob(ctx context.Context, tenantID, jobID string) (*models.PipelineAssignment, error) {
+	var assignment models.PipelineAssignment
+	err := r.db.WithContext(ctx).
+		Where(map[string]interface{}{
+			"tenant_id":  tenantID,
+			"job_id":     jobID,
+			"is_deleted": false,
+		}).
+		First(&assignment).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &assignment, nil
 }
